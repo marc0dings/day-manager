@@ -6,54 +6,39 @@ import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
-export default function TodayScreen() {
+export default function CalendarScreen() {
   const scheme = useColorScheme() ?? 'light';
   const cardBg = scheme === 'light' ? '#F2F2F7' : '#1C1C1E';
-
-  const today = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  });
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: Colors[scheme].background }]}>
       <ScrollView contentContainerStyle={styles.scroll}>
 
         <ThemedView style={styles.header}>
-          <ThemedText type="title">Today</ThemedText>
-          <ThemedText style={styles.date}>{today}</ThemedText>
+          <ThemedText type="title">Calendar</ThemedText>
         </ThemedView>
 
-        {/* Weather quick view */}
+        {/* Month view */}
         <ThemedView style={[styles.card, { backgroundColor: cardBg }]}>
-          <ThemedText type="subtitle">Weather</ThemedText>
+          <ThemedText type="subtitle">Month View</ThemedText>
           <ThemedText style={styles.hint}>
-            Current temperature, conditions and weather icon
+            Calendar grid with week and month view, days with events highlighted
           </ThemedText>
         </ThemedView>
 
-        {/* Today's events */}
+        {/* Events */}
         <ThemedView style={[styles.card, { backgroundColor: cardBg }]}>
-          <ThemedText type="subtitle">Today's Events</ThemedText>
+          <ThemedText type="subtitle">Events</ThemedText>
           <ThemedText style={styles.hint}>
-            Events from the shared calendar for today
+            List of upcoming shared events with time, participants and location
           </ThemedText>
         </ThemedView>
 
-        {/* Suggestions */}
+        {/* Share */}
         <ThemedView style={[styles.card, { backgroundColor: cardBg }]}>
-          <ThemedText type="subtitle">Suggestions</ThemedText>
+          <ThemedText type="subtitle">Share Calendar</ThemedText>
           <ThemedText style={styles.hint}>
-            Activity suggestions shown automatically when the weather is good
-          </ThemedText>
-        </ThemedView>
-
-        {/* Daily checklist */}
-        <ThemedView style={[styles.card, { backgroundColor: cardBg }]}>
-          <ThemedText type="subtitle">Checklist</ThemedText>
-          <ThemedText style={styles.hint}>
-            Tasks and to-dos for today
+            Share the calendar with others via link or invitation
           </ThemedText>
         </ThemedView>
 
@@ -65,8 +50,7 @@ export default function TodayScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: { padding: 20, gap: 16 },
-  header: { marginBottom: 4, gap: 4 },
-  date: { opacity: 0.5, fontSize: 15 },
+  header: { marginBottom: 4 },
   card: { borderRadius: 14, padding: 16, gap: 8 },
   hint: { opacity: 0.45, fontStyle: 'italic', fontSize: 14 },
 });
