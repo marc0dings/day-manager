@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -9,6 +9,7 @@ import { CalendarDays, Cloud, Home, ListChecks, Settings } from 'lucide-react-na
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const { t } = useTranslation();
 
   return (
     <Tabs
@@ -16,39 +17,40 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
         tabBarButton: HapticTab,
-      }}>
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Today',
+          title: t('tabs.today'),
           tabBarIcon: ({ color }) => <IconSymbol size={26} icon={Home} color={color} />,
         }}
       />
       <Tabs.Screen
         name="calendar"
         options={{
-          title: 'Calendar',
+          title: t('tabs.calendar'),
           tabBarIcon: ({ color }) => <IconSymbol size={26} icon={CalendarDays} color={color} />,
         }}
       />
       <Tabs.Screen
         name="weather"
         options={{
-          title: 'Weather',
+          title: t('tabs.weather'),
           tabBarIcon: ({ color }) => <IconSymbol size={26} icon={Cloud} color={color} />,
         }}
       />
       <Tabs.Screen
         name="checklists"
         options={{
-          title: 'Checklists',
+          title: t('tabs.checklists'),
           tabBarIcon: ({ color }) => <IconSymbol size={26} icon={ListChecks} color={color} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Settings',
+          title: t('tabs.settings'),
           tabBarIcon: ({ color }) => <IconSymbol size={26} icon={Settings} color={color} />,
         }}
       />

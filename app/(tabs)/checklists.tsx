@@ -13,6 +13,7 @@ import {
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/theme';
@@ -79,6 +80,7 @@ export default function ChecklistsScreen() {
   const cardBg = scheme === 'light' ? '#F2F2F7' : '#1C1C1E';
   const inputBg = scheme === 'light' ? '#F2F2F7' : '#2C2C2E';
   const tint = Colors[scheme].tint;
+  const { t } = useTranslation();
 
   const [checklists, setChecklists] = useState<Checklist[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -235,10 +237,10 @@ export default function ChecklistsScreen() {
               <View style={styles.addItemRow}>
                 <TextInput
                   style={[styles.addItemInput, { backgroundColor: inputBg, color: Colors[scheme].text }]}
-                  placeholder="Add item..."
+                  placeholder={t('checklists.addItemPlaceholder')}
                   placeholderTextColor={Colors[scheme].icon}
                   value={newItemTexts[list.id] ?? ''}
-                  onChangeText={t => setNewItemTexts(prev => ({ ...prev, [list.id]: t }))}
+                  onChangeText={t2 => setNewItemTexts(prev => ({ ...prev, [list.id]: t2 }))}
                   onSubmitEditing={() => addItem(list.id)}
                   returnKeyType="done"
                 />
@@ -261,26 +263,30 @@ export default function ChecklistsScreen() {
     <SafeAreaView style={[styles.root, { backgroundColor: Colors[scheme].background }]}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.header}>
-          <ThemedText type="title">Checklists</ThemedText>
+          <ThemedText type="title">{t('checklists.title')}</ThemedText>
         </View>
 
         {active.length > 0 && (
           <View style={styles.section}>
-            <ThemedText type="subtitle" style={styles.sectionTitle}>Active</ThemedText>
+            <ThemedText type="subtitle" style={styles.sectionTitle}>
+              {t('checklists.active')}
+            </ThemedText>
             {active.map(renderChecklist)}
           </View>
         )}
 
         {completed.length > 0 && (
           <View style={styles.section}>
-            <ThemedText type="subtitle" style={styles.sectionTitle}>Completed</ThemedText>
+            <ThemedText type="subtitle" style={styles.sectionTitle}>
+              {t('checklists.completed')}
+            </ThemedText>
             {completed.map(renderChecklist)}
           </View>
         )}
 
         {checklists.length === 0 && (
           <View style={[styles.emptyCard, { backgroundColor: cardBg }]}>
-            <ThemedText style={styles.hint}>No checklists yet. Tap + to create one.</ThemedText>
+            <ThemedText style={styles.hint}>{t('checklists.empty')}</ThemedText>
           </View>
         )}
       </ScrollView>
@@ -297,10 +303,12 @@ export default function ChecklistsScreen() {
         <Pressable style={styles.modalOverlay} onPress={() => setShowModal(false)}>
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <Pressable style={[styles.modalBox, { backgroundColor: cardBg }]}>
-              <ThemedText type="subtitle" style={styles.modalTitle}>New Checklist</ThemedText>
+              <ThemedText type="subtitle" style={styles.modalTitle}>
+                {t('checklists.newChecklist')}
+              </ThemedText>
               <TextInput
                 style={[styles.modalInput, { backgroundColor: inputBg, color: Colors[scheme].text }]}
-                placeholder="Checklist title..."
+                placeholder={t('checklists.titlePlaceholder')}
                 placeholderTextColor={Colors[scheme].icon}
                 value={newTitle}
                 onChangeText={setNewTitle}
@@ -312,7 +320,7 @@ export default function ChecklistsScreen() {
                 style={[styles.modalBtn, { backgroundColor: tint }]}
                 onPress={createChecklist}
               >
-                <ThemedText style={styles.modalBtnText}>Create</ThemedText>
+                <ThemedText style={styles.modalBtnText}>{t('checklists.create')}</ThemedText>
               </TouchableOpacity>
             </Pressable>
           </KeyboardAvoidingView>
@@ -332,13 +340,8 @@ const styles = StyleSheet.create({
   hint: { opacity: 0.45, fontStyle: 'italic', fontSize: 14, textAlign: 'center' },
 
   deleteAction: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    bottom: 0,
-    backgroundColor: '#FF3B30',
-    borderRadius: 14,
-    overflow: 'hidden',
+    position: 'absolute', right: 0, top: 0, bottom: 0,
+    backgroundColor: '#FF3B30', borderRadius: 14, overflow: 'hidden',
   },
   deleteActionBtn: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   deleteActionText: { fontSize: 22 },
@@ -348,12 +351,8 @@ const styles = StyleSheet.create({
   listHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 },
   listHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   titleInput: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '600',
-    borderBottomWidth: 1.5,
-    paddingVertical: 2,
-    marginRight: 8,
+    flex: 1, fontSize: 16, fontWeight: '600',
+    borderBottomWidth: 1.5, paddingVertical: 2, marginRight: 8,
   },
   iconBtn: { fontSize: 18, opacity: 0.6 },
   progress: { opacity: 0.5, fontSize: 14 },
@@ -364,67 +363,30 @@ const styles = StyleSheet.create({
   itemsContainer: { gap: 8, marginTop: 4 },
   itemRow: { flexDirection: 'row', alignItems: 'center' },
   itemPressable: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
-  checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   checkmark: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
   itemText: { fontSize: 15, flex: 1 },
   itemDone: { opacity: 0.4, textDecorationLine: 'line-through' },
   deleteItemBtn: { fontSize: 16, opacity: 0.35, paddingHorizontal: 4 },
 
   addItemRow: { flexDirection: 'row', gap: 8, marginTop: 4 },
-  addItemInput: {
-    flex: 1,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 15,
-  },
-  addItemBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  addItemInput: { flex: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, fontSize: 15 },
+  addItemBtn: { width: 38, height: 38, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   addItemBtnText: { color: 'rgba(0,0,0,0.8)', fontSize: 22, fontWeight: 'bold', lineHeight: 26 },
 
   fab: {
-    position: 'absolute',
-    bottom: 28,
-    right: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 6,
+    position: 'absolute', bottom: 28, right: 24,
+    width: 56, height: 56, borderRadius: 28,
+    alignItems: 'center', justifyContent: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2, shadowRadius: 8, elevation: 6,
   },
   fabText: { color: 'rgba(0,0,0,0.8)', fontSize: 32, fontWeight: '300', lineHeight: 40 },
 
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-    padding: 32,
-  },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 32 },
   modalBox: { borderRadius: 18, padding: 24, gap: 12 },
   modalTitle: { marginBottom: 4 },
-  modalInput: {
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 16,
-  },
+  modalInput: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 16 },
   modalBtn: { borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 4 },
   modalBtnText: { color: '#fff', fontWeight: '600', fontSize: 16 },
 });

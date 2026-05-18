@@ -1,5 +1,6 @@
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -9,37 +10,29 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 export default function WeatherScreen() {
   const scheme = useColorScheme() ?? 'light';
   const cardBg = scheme === 'light' ? '#F2F2F7' : '#1C1C1E';
+  const { t } = useTranslation();
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: Colors[scheme].background }]}>
       <ScrollView contentContainerStyle={styles.scroll}>
 
         <ThemedView style={styles.header}>
-          <ThemedText type="title">Weather</ThemedText>
+          <ThemedText type="title">{t('weather.title')}</ThemedText>
         </ThemedView>
 
-        {/* Current weather */}
         <ThemedView style={[styles.card, { backgroundColor: cardBg }]}>
-          <ThemedText type="subtitle">Current</ThemedText>
-          <ThemedText style={styles.hint}>
-            Temperature, feels like, conditions, humidity and wind speed
-          </ThemedText>
+          <ThemedText type="subtitle">{t('weather.current')}</ThemedText>
+          <ThemedText style={styles.hint}>{t('weather.currentHint')}</ThemedText>
         </ThemedView>
 
-        {/* Hourly forecast */}
         <ThemedView style={[styles.card, { backgroundColor: cardBg }]}>
-          <ThemedText type="subtitle">Hourly Forecast</ThemedText>
-          <ThemedText style={styles.hint}>
-            Horizontal scroll with temperature and icon per hour (next 24 h)
-          </ThemedText>
+          <ThemedText type="subtitle">{t('weather.hourly')}</ThemedText>
+          <ThemedText style={styles.hint}>{t('weather.hourlyHint')}</ThemedText>
         </ThemedView>
 
-        {/* 7-day forecast */}
         <ThemedView style={[styles.card, { backgroundColor: cardBg }]}>
-          <ThemedText type="subtitle">7-Day Forecast</ThemedText>
-          <ThemedText style={styles.hint}>
-            Daily overview with min/max temperature and precipitation probability
-          </ThemedText>
+          <ThemedText type="subtitle">{t('weather.sevenDay')}</ThemedText>
+          <ThemedText style={styles.hint}>{t('weather.sevenDayHint')}</ThemedText>
         </ThemedView>
 
       </ScrollView>
