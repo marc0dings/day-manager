@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
   },
   formTitle: { fontSize: 17 },
   saveBtn: { borderRadius: 8, paddingHorizontal: 14, paddingVertical: 7 },
-  saveBtnText: { color: '#fff', fontWeight: '600', fontSize: 15 },
+  saveBtnText: { color: 'rgba(0,0,0,0.8)', fontWeight: '600', fontSize: 15 },
   formScroll: { padding: 20, gap: 12 },
   formSection: { borderRadius: 14, paddingHorizontal: 16, paddingVertical: 12, gap: 10 },
   formRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

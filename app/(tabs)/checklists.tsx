@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   KeyboardAvoidingView,
   Modal,
@@ -13,7 +14,6 @@ import {
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTranslation } from 'react-i18next';
 
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/theme';
@@ -388,5 +388,5 @@ const styles = StyleSheet.create({
   modalTitle: { marginBottom: 4 },
   modalInput: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 16 },
   modalBtn: { borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 4 },
-  modalBtnText: { color: '#fff', fontWeight: '600', fontSize: 16 },
+  modalBtnText: { color: 'rgba(0,0,0,0.8)', fontWeight: '600', fontSize: 16 },
 });
