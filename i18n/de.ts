@@ -69,6 +69,16 @@ const de: Translations = {
     hourlyHint: 'Horizontaler Scroll mit Temperatur und Symbol pro Stunde (nächste 24 Std.)',
     sevenDay: '7-Tage-Vorhersage',
     sevenDayHint: 'Tagesübersicht mit Min-/Max-Temperatur und Niederschlagswahrscheinlichkeit',
+    searchPlaceholder: 'Stadt suchen...',
+    loading: 'Wetterdaten werden geladen...',
+    error: 'Wetterdaten konnten nicht geladen werden',
+    retry: 'Erneut versuchen',
+    noCity: 'Gib einen Stadtnamen ein, um das Wetter anzuzeigen.',
+    feelsLike: 'Gefühlt',
+    humidity: 'Luftfeuchte',
+    wind: 'Wind',
+    precipitation: 'Niederschl.',
+    today: 'Heute',
   },
 };
 

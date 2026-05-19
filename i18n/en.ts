@@ -67,6 +67,16 @@ const en = {
     hourlyHint: 'Horizontal scroll with temperature and icon per hour (next 24 h)',
     sevenDay: '7-Day Forecast',
     sevenDayHint: 'Daily overview with min/max temperature and precipitation probability',
+    searchPlaceholder: 'Search city...',
+    loading: 'Loading weather data...',
+    error: 'Failed to load weather data',
+    retry: 'Retry',
+    noCity: 'Enter a city name to see the weather.',
+    feelsLike: 'Feels like',
+    humidity: 'Humidity',
+    wind: 'Wind',
+    precipitation: 'Prec.',
+    today: 'Today',
   },
 };
 
@@ -77,7 +87,7 @@ export type Translations = {
   calendar: { title: string; noEvents: string; newEvent: string; save: string; allDay: string; start: string; end: string; locationPlaceholder: string; color: string; titlePlaceholder: string; done: string; months: string[]; weekdays: string[] };
   checklists: { title: string; newChecklist: string; titlePlaceholder: string; addItemPlaceholder: string; create: string; active: string; completed: string; empty: string };
   settings: { title: string; language: string; account: string; accountHint: string; appearance: string; appearanceHint: string; notifications: string; notificationsHint: string; weatherSource: string; weatherSourceHint: string };
-  weather: { title: string; current: string; currentHint: string; hourly: string; hourlyHint: string; sevenDay: string; sevenDayHint: string };
+  weather: { title: string; current: string; currentHint: string; hourly: string; hourlyHint: string; sevenDay: string; sevenDayHint: string; searchPlaceholder: string; loading: string; error: string; retry: string; noCity: string; feelsLike: string; humidity: string; wind: string; precipitation: string; today: string };
 };
 
 export default en satisfies Translations;
