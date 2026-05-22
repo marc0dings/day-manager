@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Clock, MapPin } from 'lucide-react-native';
@@ -9,6 +9,13 @@ import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { useEvents } from '@/context/events-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import {
+  type SavedCity,
+  type WeatherData,
+  fetchWeather,
+  loadSavedCity,
+  weatherEmoji,
+} from '@/services/weather';
 
 export default function TodayScreen() {
   const scheme = useColorScheme() ?? 'light';
@@ -44,6 +51,21 @@ export default function TodayScreen() {
     return d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
   }
 
+  const [city, setCity] = useState<SavedCity | null>(null);
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [weatherLoading, setWeatherLoading] = useState(true);
+
+  useEffect(() => {
+    loadSavedCity().then(saved => {
+      if (!saved) { setWeatherLoading(false); return; }
+      setCity(saved);
+      fetchWeather(saved.latitude, saved.longitude)
+        .then(setWeather)
+        .catch(() => {})
+        .finally(() => setWeatherLoading(false));
+    });
+  }, []);
+
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -56,7 +78,38 @@ export default function TodayScreen() {
         {/* Weather quick view */}
         <ThemedView style={[styles.card, { backgroundColor: cardBg }]}>
           <ThemedText type="subtitle">{t('today.weather')}</ThemedText>
-          <ThemedText style={styles.hint}>{t('today.weatherHint')}</ThemedText>
+
+          {weatherLoading && (
+            <ActivityIndicator size="small" color={colors.tint} style={{ alignSelf: 'flex-start' }} />
+          )}
+
+          {!weatherLoading && !city && (
+            <ThemedText style={styles.hint}>{t('today.weatherNoCity')}</ThemedText>
+          )}
+
+          {!weatherLoading && weather && city && (
+            <View style={styles.weatherRow}>
+              <ThemedText style={styles.weatherEmoji}>
+                {weatherEmoji(weather.current.weatherCode)}
+              </ThemedText>
+              <View style={styles.weatherMain}>
+                <ThemedText style={styles.weatherTemp}>
+                  {Math.round(weather.current.temperature)}°C
+                </ThemedText>
+                <ThemedText style={[styles.weatherCity, { color: colors.icon }]}>
+                  {city.name}{city.country ? `, ${city.country}` : ''}
+                </ThemedText>
+              </View>
+              <View style={styles.weatherStats}>
+                <ThemedText style={[styles.weatherStat, { color: colors.icon }]}>
+                  💧 {weather.current.humidity}%
+                </ThemedText>
+                <ThemedText style={[styles.weatherStat, { color: colors.icon }]}>
+                  💨 {Math.round(weather.current.windSpeed)} km/h
+                </ThemedText>
+              </View>
+            </View>
+          )}
         </ThemedView>
 
         {/* Today's events */}
@@ -128,6 +181,15 @@ const styles = StyleSheet.create({
   date: { fontSize: 15 },
   card: { borderRadius: 14, padding: 16, gap: 10 },
   hint: { opacity: 0.45, fontStyle: 'italic', fontSize: 14 },
+
+  weatherRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  weatherEmoji: { fontSize: 40 },
+  weatherMain: { flex: 1, gap: 2 },
+  weatherTemp: { fontSize: 28, fontWeight: '300', letterSpacing: -1 },
+  weatherCity: { fontSize: 13 },
+  weatherStats: { alignItems: 'flex-end', gap: 4 },
+  weatherStat: { fontSize: 13 },
+
   eventList: { gap: 12 },
   eventRow: { flexDirection: 'row', alignItems: 'flex-start', borderLeftWidth: 3, paddingLeft: 10, gap: 4 },
   eventContent: { flex: 1, gap: 3 },

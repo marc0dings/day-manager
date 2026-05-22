@@ -8,15 +8,15 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { EventsProvider } from '@/context/events-context';
+import { ThemeModeProvider, useThemeMode } from '@/context/theme-context';
 import i18n, { LANG_STORAGE_KEY } from '@/i18n';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export const unstable_settings = {
   anchor: '(tabs)',
 };
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+function AppShell() {
+  const { effectiveScheme } = useThemeMode();
 
   useEffect(() => {
     AsyncStorage.getItem(LANG_STORAGE_KEY).then(lang => {
@@ -25,14 +25,22 @@ export default function RootLayout() {
   }, []);
 
   return (
+    <ThemeProvider value={effectiveScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+      </Stack>
+      <StatusBar style="auto" />
+    </ThemeProvider>
+  );
+}
+
+export default function RootLayout() {
+  return (
     <EventsProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-        </Stack>
-        <StatusBar style="auto" />
-      </ThemeProvider>
+      <ThemeModeProvider>
+        <AppShell />
+      </ThemeModeProvider>
     </EventsProvider>
   );
 }

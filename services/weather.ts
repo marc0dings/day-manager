@@ -134,3 +134,7 @@ export async function loadSavedCity(): Promise<SavedCity | null> {
 export async function saveCity(city: SavedCity): Promise<void> {
   await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(city));
 }
+
+export async function clearSavedCity(): Promise<void> {
+  await AsyncStorage.removeItem(STORAGE_KEY);
+}
