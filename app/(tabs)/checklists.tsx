@@ -17,10 +17,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { Colors } from '@/constants/theme';
+import { useEvents } from '@/context/events-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import type { CalendarEvent } from '@/types/event';
 
 type ChecklistItem = { id: string; text: string; checked: boolean };
-type Checklist = { id: string; title: string; items: ChecklistItem[] };
+type Checklist = { id: string; title: string; items: ChecklistItem[]; eventId?: string };
 
 const DELETE_WIDTH = 72;
 const SWIPE_THRESHOLD = 48;
@@ -82,6 +84,8 @@ export default function ChecklistsScreen() {
   const tint = Colors[scheme].tint;
   const { t } = useTranslation();
 
+  const { events } = useEvents();
+
   const [checklists, setChecklists] = useState<Checklist[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -89,14 +93,41 @@ export default function ChecklistsScreen() {
   const [newItemTexts, setNewItemTexts] = useState<Record<string, string>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
+  const [newEventId, setNewEventId] = useState<string | null>(null);
+  const [showInlineEventPicker, setShowInlineEventPicker] = useState(false);
+  const [showPickerFor, setShowPickerFor] = useState<string | null>(null);
+
+  function getEvent(eventId?: string): CalendarEvent | undefined {
+    return eventId ? events.find(e => e.id === eventId) : undefined;
+  }
+
+  function formatEventDate(date: Date) {
+    const locale = t('locale');
+    return (
+      date.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' }) +
+      ' · ' +
+      date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+    );
+  }
 
   function createChecklist() {
     if (!newTitle.trim()) return;
     const id = Date.now().toString();
-    setChecklists(prev => [...prev, { id, title: newTitle.trim(), items: [] }]);
+    setChecklists(prev => [
+      ...prev,
+      { id, title: newTitle.trim(), items: [], eventId: newEventId ?? undefined },
+    ]);
     setNewTitle('');
+    setNewEventId(null);
+    setShowInlineEventPicker(false);
     setShowModal(false);
     setExpandedId(id);
+  }
+
+  function closeCreateModal() {
+    setShowModal(false);
+    setNewEventId(null);
+    setShowInlineEventPicker(false);
   }
 
   function addItem(listId: string) {
@@ -149,6 +180,42 @@ export default function ChecklistsScreen() {
     setEditingId(null);
   }
 
+  function setListEvent(listId: string, eventId: string | null) {
+    setChecklists(prev =>
+      prev.map(l => (l.id === listId ? { ...l, eventId: eventId ?? undefined } : l))
+    );
+    setShowPickerFor(null);
+  }
+
+  const sortedEvents = [...events].sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
+
+  function renderEventPickerList(
+    selectedEventId: string | null | undefined,
+    onSelect: (eventId: string | null) => void,
+  ) {
+    return (
+      <ScrollView style={{ maxHeight: 280 }} nestedScrollEnabled showsVerticalScrollIndicator={false}>
+        <TouchableOpacity style={styles.pickerRow} onPress={() => onSelect(null)}>
+          <ThemedText style={[styles.pickerRowLabel, { opacity: 0.5 }]}>{t('checklists.noEvent')}</ThemedText>
+          {!selectedEventId && <ThemedText style={{ color: tint }}>✓</ThemedText>}
+        </TouchableOpacity>
+        {sortedEvents.length === 0 && (
+          <ThemedText style={styles.pickerEmpty}>{t('checklists.noEventsToLink')}</ThemedText>
+        )}
+        {sortedEvents.map(ev => (
+          <TouchableOpacity key={ev.id} style={styles.pickerRow} onPress={() => onSelect(ev.id)}>
+            <View style={[styles.eventDot, { backgroundColor: ev.color ?? tint }]} />
+            <View style={{ flex: 1 }}>
+              <ThemedText style={styles.pickerRowLabel}>{ev.title}</ThemedText>
+              <ThemedText style={styles.pickerRowDate}>{formatEventDate(ev.startAt)}</ThemedText>
+            </View>
+            {selectedEventId === ev.id && <ThemedText style={{ color: tint }}>✓</ThemedText>}
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    );
+  }
+
   const active = checklists.filter(l => l.items.length === 0 || l.items.some(i => !i.checked));
   const completed = checklists.filter(l => l.items.length > 0 && l.items.every(i => i.checked));
 
@@ -158,6 +225,7 @@ export default function ChecklistsScreen() {
     const isExpanded = expandedId === list.id;
     const isEditing = editingId === list.id;
     const progressPct = total > 0 ? `${(done / total) * 100}%` : '0%';
+    const linkedEvent = getEvent(list.eventId);
 
     return (
       <SwipeableCard
@@ -191,6 +259,9 @@ export default function ChecklistsScreen() {
               )}
             </TouchableOpacity>
             <View style={styles.listHeaderRight}>
+              <TouchableOpacity onPress={() => setShowPickerFor(list.id)} hitSlop={8}>
+                <ThemedText style={[styles.iconBtn, { opacity: list.eventId ? 0.85 : 0.3 }]}>📅</ThemedText>
+              </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => isEditing ? saveEdit(list.id) : startEdit(list)}
                 hitSlop={8}
@@ -205,6 +276,18 @@ export default function ChecklistsScreen() {
               </TouchableOpacity>
             </View>
           </View>
+
+          {linkedEvent && !isEditing && (
+            <TouchableOpacity style={styles.eventBadge} onPress={() => setShowPickerFor(list.id)}>
+              <View style={[styles.eventDot, { backgroundColor: linkedEvent.color ?? tint }]} />
+              <ThemedText style={styles.eventBadgeText} numberOfLines={1}>
+                {linkedEvent.title}
+              </ThemedText>
+              <ThemedText style={styles.eventBadgeDate}>
+                {formatEventDate(linkedEvent.startAt)}
+              </ThemedText>
+            </TouchableOpacity>
+          )}
 
           {total > 0 && (
             <View style={[styles.progressBar, { backgroundColor: inputBg }]}>
@@ -299,8 +382,9 @@ export default function ChecklistsScreen() {
         <ThemedText style={styles.fabText}>+</ThemedText>
       </TouchableOpacity>
 
-      <Modal visible={showModal} transparent animationType="fade" onRequestClose={() => setShowModal(false)}>
-        <Pressable style={styles.modalOverlay} onPress={() => setShowModal(false)}>
+      {/* New checklist modal */}
+      <Modal visible={showModal} transparent animationType="fade" onRequestClose={closeCreateModal}>
+        <Pressable style={styles.modalOverlay} onPress={closeCreateModal}>
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <Pressable style={[styles.modalBox, { backgroundColor: cardBg }]}>
               <ThemedText type="subtitle" style={styles.modalTitle}>
@@ -316,6 +400,34 @@ export default function ChecklistsScreen() {
                 onSubmitEditing={createChecklist}
                 returnKeyType="done"
               />
+
+              {/* Event assignment row */}
+              <TouchableOpacity
+                style={[styles.assignEventRow, { backgroundColor: inputBg }]}
+                onPress={() => setShowInlineEventPicker(p => !p)}
+                activeOpacity={0.7}
+              >
+                {newEventId && getEvent(newEventId) && (
+                  <View style={[styles.eventDot, { backgroundColor: getEvent(newEventId)!.color ?? tint }]} />
+                )}
+                <ThemedText
+                  style={[styles.assignEventLabel, { color: newEventId ? tint : Colors[scheme].icon }]}
+                  numberOfLines={1}
+                >
+                  {'📅  ' + (newEventId && getEvent(newEventId) ? getEvent(newEventId)!.title : t('checklists.assignEvent'))}
+                </ThemedText>
+                {newEventId && (
+                  <TouchableOpacity
+                    onPress={() => { setNewEventId(null); setShowInlineEventPicker(false); }}
+                    hitSlop={8}
+                  >
+                    <ThemedText style={{ opacity: 0.4, fontSize: 14 }}>✕</ThemedText>
+                  </TouchableOpacity>
+                )}
+              </TouchableOpacity>
+
+              {showInlineEventPicker && renderEventPickerList(newEventId, (id) => setNewEventId(id))}
+
               <TouchableOpacity
                 style={[styles.modalBtn, { backgroundColor: tint }]}
                 onPress={createChecklist}
@@ -324,6 +436,26 @@ export default function ChecklistsScreen() {
               </TouchableOpacity>
             </Pressable>
           </KeyboardAvoidingView>
+        </Pressable>
+      </Modal>
+
+      {/* Event picker for existing checklists */}
+      <Modal
+        visible={showPickerFor !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowPickerFor(null)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setShowPickerFor(null)}>
+          <Pressable style={[styles.modalBox, { backgroundColor: cardBg }]}>
+            <ThemedText type="subtitle" style={styles.modalTitle}>
+              {t('checklists.eventPickerTitle')}
+            </ThemedText>
+            {renderEventPickerList(
+              checklists.find(l => l.id === showPickerFor)?.eventId ?? null,
+              (id) => setListEvent(showPickerFor!, id),
+            )}
+          </Pressable>
         </Pressable>
       </Modal>
     </SafeAreaView>
@@ -360,6 +492,11 @@ const styles = StyleSheet.create({
   progressBar: { height: 4, borderRadius: 2, overflow: 'hidden' },
   progressFill: { height: '100%', borderRadius: 2 },
 
+  eventBadge: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  eventBadgeText: { fontSize: 13, opacity: 0.75, flex: 1 },
+  eventBadgeDate: { fontSize: 11, opacity: 0.45 },
+  eventDot: { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
+
   itemsContainer: { gap: 8, marginTop: 4 },
   itemRow: { flexDirection: 'row', alignItems: 'center' },
   itemPressable: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
@@ -389,4 +526,15 @@ const styles = StyleSheet.create({
   modalInput: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 16 },
   modalBtn: { borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 4 },
   modalBtnText: { color: 'rgba(0,0,0,0.8)', fontWeight: '600', fontSize: 16 },
+
+  assignEventRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10,
+  },
+  assignEventLabel: { flex: 1, fontSize: 15 },
+
+  pickerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingHorizontal: 2 },
+  pickerRowLabel: { fontSize: 14, flex: 1 },
+  pickerRowDate: { fontSize: 12, opacity: 0.45 },
+  pickerEmpty: { opacity: 0.45, fontStyle: 'italic', fontSize: 14, padding: 8 },
 });
