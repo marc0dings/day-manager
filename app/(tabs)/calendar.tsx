@@ -1,5 +1,5 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { ChevronLeft, ChevronRight, Clock, MapPin, Plus, X } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Clock, Edit2, MapPin, Plus, X } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -21,6 +21,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { useEvents } from '@/context/events-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import type { CalendarEvent } from '@/types/event';
 
 // ─── constants ───────────────────────────────────────────────────────────────
 
@@ -48,6 +49,7 @@ type EventForm = {
   endAt: Date;
   location: string;
   color: string;
+  editingId?: string;
 };
 
 type PickerField = 'startDate' | 'startTime' | 'endDate' | 'endTime';
@@ -90,7 +92,7 @@ export default function CalendarScreen() {
     return d.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   }
 
-  const { events, addEvent, deleteEvent, eventsForDate } = useEvents();
+  const { events, addEvent, updateEvent, deleteEvent, eventsForDate } = useEvents();
 
   // ── calendar navigation ──
   const [currentMonth, setCurrentMonth] = useState(
@@ -112,15 +114,22 @@ export default function CalendarScreen() {
     return r;
   }, [leadingOffset, totalDays]);
 
+  // Mark dots on every day an event spans (not just start day)
   const dotsByDay = useMemo(() => {
     const map: Record<string, string[]> = {};
     for (const ev of events) {
-      const key = `${ev.startAt.getFullYear()}-${ev.startAt.getMonth()}-${ev.startAt.getDate()}`;
-      if (!map[key]) map[key] = [];
-      if (map[key].length < 3) map[key].push(ev.color ?? colors.tint);
+      const startDay = new Date(ev.startAt.getFullYear(), ev.startAt.getMonth(), ev.startAt.getDate());
+      const endDay = new Date(ev.endAt.getFullYear(), ev.endAt.getMonth(), ev.endAt.getDate());
+      const cur = new Date(startDay);
+      while (cur <= endDay) {
+        const key = `${cur.getFullYear()}-${cur.getMonth()}-${cur.getDate()}`;
+        if (!map[key]) map[key] = [];
+        if (map[key].length < 3) map[key].push(ev.color ?? colors.tint);
+        cur.setDate(cur.getDate() + 1);
+      }
     }
     return map;
-  }, [events]);
+  }, [events, colors.tint]);
 
   const selectedEvents = useMemo(
     () => eventsForDate(selectedDate),
@@ -137,9 +146,22 @@ export default function CalendarScreen() {
     setShowForm(true);
   }
 
+  function openEditForm(ev: CalendarEvent) {
+    setForm({
+      title: ev.title,
+      allDay: ev.allDay,
+      startAt: new Date(ev.startAt),
+      endAt: new Date(ev.endAt),
+      location: ev.location ?? '',
+      color: ev.color ?? EVENT_COLORS[4],
+      editingId: ev.id,
+    });
+    setShowForm(true);
+  }
+
   function saveEvent() {
     if (!form.title.trim()) return;
-    addEvent({
+    const payload = {
       title: form.title.trim(),
       allDay: form.allDay,
       startAt: form.startAt,
@@ -148,7 +170,12 @@ export default function CalendarScreen() {
       color: form.color,
       participants: [],
       createdBy: 'me',
-    });
+    };
+    if (form.editingId) {
+      updateEvent({ ...payload, id: form.editingId });
+    } else {
+      addEvent(payload);
+    }
     setShowForm(false);
   }
 
@@ -186,6 +213,39 @@ export default function CalendarScreen() {
   }
 
   const pickerMode = pickerField?.endsWith('Time') ? 'time' : 'date';
+
+  // ─── helpers for event row display ───────────────────────────────────────
+
+  function renderEventMeta(ev: CalendarEvent) {
+    const multiDay = !isSameDay(ev.startAt, ev.endAt);
+    if (multiDay) {
+      return (
+        <View style={styles.metaRow}>
+          <ThemedText style={[styles.meta, { color: colors.icon }]}>
+            {fmtDate(ev.startAt)}
+            {' – '}
+            {fmtDate(ev.endAt)}
+            {!ev.allDay ? `  ·  ${fmt(ev.startAt)} – ${fmt(ev.endAt)}` : ''}
+          </ThemedText>
+        </View>
+      );
+    }
+    if (ev.allDay) {
+      return (
+        <ThemedText style={[styles.meta, { color: colors.icon }]}>
+          {t('calendar.allDay')}
+        </ThemedText>
+      );
+    }
+    return (
+      <View style={styles.metaRow}>
+        <Clock size={12} color={colors.icon} />
+        <ThemedText style={[styles.meta, { color: colors.icon }]}>
+          {fmt(ev.startAt)} – {fmt(ev.endAt)}
+        </ThemedText>
+      </View>
+    );
+  }
 
   // ── render ────────────────────────────────────────────────────────────────
 
@@ -277,18 +337,7 @@ export default function CalendarScreen() {
                     <ThemedText type="defaultSemiBold" style={styles.eventTitle}>
                       {ev.title}
                     </ThemedText>
-                    {ev.allDay ? (
-                      <ThemedText style={[styles.meta, { color: colors.icon }]}>
-                        {t('calendar.allDay')}
-                      </ThemedText>
-                    ) : (
-                      <View style={styles.metaRow}>
-                        <Clock size={12} color={colors.icon} />
-                        <ThemedText style={[styles.meta, { color: colors.icon }]}>
-                          {fmt(ev.startAt)} – {fmt(ev.endAt)}
-                        </ThemedText>
-                      </View>
-                    )}
+                    {renderEventMeta(ev)}
                     {ev.location ? (
                       <View style={styles.metaRow}>
                         <MapPin size={12} color={colors.icon} />
@@ -296,9 +345,14 @@ export default function CalendarScreen() {
                       </View>
                     ) : null}
                   </View>
-                  <TouchableOpacity onPress={() => deleteEvent(ev.id)} hitSlop={8}>
-                    <X size={16} color={colors.icon} />
-                  </TouchableOpacity>
+                  <View style={styles.eventActions}>
+                    <TouchableOpacity onPress={() => openEditForm(ev)} hitSlop={8}>
+                      <Edit2 size={15} color={colors.icon} />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => deleteEvent(ev.id)} hitSlop={8}>
+                      <X size={16} color={colors.icon} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               ))}
             </View>
@@ -333,7 +387,7 @@ export default function CalendarScreen() {
                 <X size={22} color={colors.tint} />
               </TouchableOpacity>
               <ThemedText type="defaultSemiBold" style={styles.formTitle}>
-                {t('calendar.newEvent')}
+                {form.editingId ? t('calendar.editEvent') : t('calendar.newEvent')}
               </ThemedText>
               <TouchableOpacity
                 onPress={saveEvent}
@@ -357,7 +411,7 @@ export default function CalendarScreen() {
                   placeholderTextColor={colors.icon}
                   value={form.title}
                   onChangeText={t2 => setForm(f => ({ ...f, title: t2 }))}
-                  autoFocus
+                  autoFocus={!form.editingId}
                   returnKeyType="done"
                 />
               </View>
@@ -377,6 +431,7 @@ export default function CalendarScreen() {
 
               {/* Date / time */}
               <View style={[styles.formSection, { backgroundColor: cardBg }]}>
+                {/* Start */}
                 <View style={styles.formRow}>
                   <ThemedText style={styles.formLabel}>{t('calendar.start')}</ThemedText>
                   <View style={styles.dtRow}>
@@ -391,6 +446,7 @@ export default function CalendarScreen() {
                         style={[styles.dtBtn, { backgroundColor: inputBg }]}
                         onPress={() => openPicker('startTime')}
                       >
+                        <Clock size={13} color={colors.icon} style={{ marginRight: 4 }} />
                         <ThemedText style={styles.dtText}>{fmt(form.startAt)}</ThemedText>
                       </TouchableOpacity>
                     )}
@@ -399,6 +455,7 @@ export default function CalendarScreen() {
 
                 <View style={[styles.rowSep, { backgroundColor: inputBg }]} />
 
+                {/* End */}
                 <View style={styles.formRow}>
                   <ThemedText style={styles.formLabel}>{t('calendar.end')}</ThemedText>
                   <View style={styles.dtRow}>
@@ -406,18 +463,37 @@ export default function CalendarScreen() {
                       style={[styles.dtBtn, { backgroundColor: inputBg }]}
                       onPress={() => openPicker('endDate')}
                     >
-                      <ThemedText style={styles.dtText}>{fmtDate(form.endAt)}</ThemedText>
+                      <ThemedText style={[
+                        styles.dtText,
+                        !isSameDay(form.startAt, form.endAt) && { color: colors.tint, fontWeight: '600' },
+                      ]}>
+                        {fmtDate(form.endAt)}
+                      </ThemedText>
                     </TouchableOpacity>
                     {!form.allDay && (
                       <TouchableOpacity
                         style={[styles.dtBtn, { backgroundColor: inputBg }]}
                         onPress={() => openPicker('endTime')}
                       >
+                        <Clock size={13} color={colors.icon} style={{ marginRight: 4 }} />
                         <ThemedText style={styles.dtText}>{fmt(form.endAt)}</ThemedText>
                       </TouchableOpacity>
                     )}
                   </View>
                 </View>
+
+                {/* Multi-day indicator */}
+                {!isSameDay(form.startAt, form.endAt) && (
+                  <ThemedText style={[styles.multiDayHint, { color: colors.tint }]}>
+                    {t('calendar.multiDayHint', {
+                      count: Math.round(
+                        (new Date(form.endAt.getFullYear(), form.endAt.getMonth(), form.endAt.getDate()).getTime() -
+                          new Date(form.startAt.getFullYear(), form.startAt.getMonth(), form.startAt.getDate()).getTime()) /
+                        86_400_000
+                      ) + 1,
+                    })}
+                  </ThemedText>
+                )}
               </View>
 
               {/* Location */}
@@ -524,6 +600,7 @@ const styles = StyleSheet.create({
   eventRow: { flexDirection: 'row', alignItems: 'flex-start', borderLeftWidth: 3, paddingLeft: 10, gap: 4 },
   eventContent: { flex: 1, gap: 4 },
   eventTitle: { fontSize: 15 },
+  eventActions: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 2 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   meta: { fontSize: 12 },
 
@@ -550,8 +627,9 @@ const styles = StyleSheet.create({
   rowSep: { height: 1 },
   titleInput: { fontSize: 17, paddingVertical: 2 },
   dtRow: { flexDirection: 'row', gap: 6 },
-  dtBtn: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 },
+  dtBtn: { flexDirection: 'row', alignItems: 'center', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 },
   dtText: { fontSize: 14, fontWeight: '500' },
+  multiDayHint: { fontSize: 13, fontWeight: '500' },
   locationInput: { flex: 1, fontSize: 15, marginLeft: 10 },
   colorRow: { flexDirection: 'row', gap: 10 },
   colorCircle: { width: 28, height: 28, borderRadius: 14 },

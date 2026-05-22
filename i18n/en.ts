@@ -32,6 +32,8 @@ const en = {
     color: 'Color',
     titlePlaceholder: 'Title',
     done: 'Done',
+    editEvent: 'Edit Event',
+    multiDayHint: '{{count}} days',
     months: [
       'January', 'February', 'March', 'April', 'May', 'June',
       'July', 'August', 'September', 'October', 'November', 'December',
@@ -95,7 +97,7 @@ export type Translations = {
   locale: string;
   tabs: { today: string; calendar: string; weather: string; checklists: string; settings: string };
   today: { title: string; eventsTitle: string; noEvents: string; allDay: string; weather: string; weatherHint: string; weatherNoCity: string; suggestions: string; suggestionsHint: string; checklist: string; checklistHint: string };
-  calendar: { title: string; noEvents: string; newEvent: string; save: string; allDay: string; start: string; end: string; locationPlaceholder: string; color: string; titlePlaceholder: string; done: string; months: string[]; weekdays: string[] };
+  calendar: { title: string; noEvents: string; newEvent: string; editEvent: string; save: string; allDay: string; start: string; end: string; locationPlaceholder: string; color: string; titlePlaceholder: string; done: string; multiDayHint: string; months: string[]; weekdays: string[] };
   checklists: { title: string; newChecklist: string; titlePlaceholder: string; addItemPlaceholder: string; create: string; active: string; completed: string; empty: string; assignEvent: string; noEvent: string; eventPickerTitle: string; noEventsToLink: string };
   settings: { title: string; language: string; account: string; accountHint: string; namePlaceholder: string; appearance: string; appearanceHint: string; themeLight: string; themeDark: string; themeSystem: string; notifications: string; notificationsHint: string; weatherSource: string; weatherSourceHint: string; weatherNoCity: string; weatherCityClear: string };
   weather: { title: string; current: string; currentHint: string; hourly: string; hourlyHint: string; sevenDay: string; sevenDayHint: string; searchPlaceholder: string; loading: string; error: string; retry: string; noCity: string; feelsLike: string; humidity: string; wind: string; precipitation: string; today: string };

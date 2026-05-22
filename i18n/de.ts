@@ -34,6 +34,8 @@ const de: Translations = {
     color: 'Farbe',
     titlePlaceholder: 'Titel',
     done: 'Fertig',
+    editEvent: 'Termin bearbeiten',
+    multiDayHint: '{{count}} Tage',
     months: [
       'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
       'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember',
