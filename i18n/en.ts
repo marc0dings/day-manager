@@ -14,6 +14,7 @@ const en = {
     allDay: 'All day',
     weather: 'Weather',
     weatherHint: 'Current temperature, conditions and weather icon',
+    weatherNoCity: 'No city set. Go to the Weather tab to search.',
     suggestions: 'Suggestions',
     suggestionsHint: 'Activity suggestions when the weather is good',
     checklist: 'Checklist',
@@ -46,18 +47,28 @@ const en = {
     active: 'Active',
     completed: 'Completed',
     empty: 'No checklists yet. Tap + to create one.',
+    assignEvent: 'Assign to event (optional)',
+    noEvent: 'No event',
+    eventPickerTitle: 'Link to event',
+    noEventsToLink: 'No events available.',
   },
   settings: {
     title: 'Settings',
     language: 'Language',
     account: 'Account',
     accountHint: 'Profile, name and account management',
+    namePlaceholder: 'Your name...',
     appearance: 'Appearance',
     appearanceHint: 'Light / dark mode and theme preferences',
+    themeLight: 'Light',
+    themeDark: 'Dark',
+    themeSystem: 'System',
     notifications: 'Notifications',
-    notificationsHint: 'Event reminders and weather alerts',
+    notificationsHint: 'Event reminders and weather alerts — coming soon',
     weatherSource: 'Weather Source',
-    weatherSourceHint: 'API key and location settings for weather data',
+    weatherSourceHint: 'Location used for weather data',
+    weatherNoCity: 'No city saved yet.',
+    weatherCityClear: 'Remove',
   },
   weather: {
     title: 'Weather',
@@ -83,10 +94,10 @@ const en = {
 export type Translations = {
   locale: string;
   tabs: { today: string; calendar: string; weather: string; checklists: string; settings: string };
-  today: { title: string; eventsTitle: string; noEvents: string; allDay: string; weather: string; weatherHint: string; suggestions: string; suggestionsHint: string; checklist: string; checklistHint: string };
+  today: { title: string; eventsTitle: string; noEvents: string; allDay: string; weather: string; weatherHint: string; weatherNoCity: string; suggestions: string; suggestionsHint: string; checklist: string; checklistHint: string };
   calendar: { title: string; noEvents: string; newEvent: string; save: string; allDay: string; start: string; end: string; locationPlaceholder: string; color: string; titlePlaceholder: string; done: string; months: string[]; weekdays: string[] };
-  checklists: { title: string; newChecklist: string; titlePlaceholder: string; addItemPlaceholder: string; create: string; active: string; completed: string; empty: string };
-  settings: { title: string; language: string; account: string; accountHint: string; appearance: string; appearanceHint: string; notifications: string; notificationsHint: string; weatherSource: string; weatherSourceHint: string };
+  checklists: { title: string; newChecklist: string; titlePlaceholder: string; addItemPlaceholder: string; create: string; active: string; completed: string; empty: string; assignEvent: string; noEvent: string; eventPickerTitle: string; noEventsToLink: string };
+  settings: { title: string; language: string; account: string; accountHint: string; namePlaceholder: string; appearance: string; appearanceHint: string; themeLight: string; themeDark: string; themeSystem: string; notifications: string; notificationsHint: string; weatherSource: string; weatherSourceHint: string; weatherNoCity: string; weatherCityClear: string };
   weather: { title: string; current: string; currentHint: string; hourly: string; hourlyHint: string; sevenDay: string; sevenDayHint: string; searchPlaceholder: string; loading: string; error: string; retry: string; noCity: string; feelsLike: string; humidity: string; wind: string; precipitation: string; today: string };
 };
 
