@@ -187,6 +187,10 @@ export default function CalendarScreen() {
     const base = field.startsWith('start') ? form.startAt : form.endAt;
     setPickerValue(new Date(base));
     setPickerField(field);
+    if (Platform.OS === 'web') {
+      setWebPickerStr(field.endsWith('Time') ? toHHMM(new Date(base)) : toDDMMYYYY(new Date(base)));
+      setWebCtx('form');
+    }
   }
 
   function handlePickerChange(_: any, selected?: Date) {
@@ -214,35 +218,174 @@ export default function CalendarScreen() {
 
   const pickerMode = pickerField?.endsWith('Time') ? 'time' : 'date';
 
+  // ── web time picker ──
+  const [webPickerStr, setWebPickerStr] = useState('');
+  const [webCtx, setWebCtx] = useState<'form' | 'inline' | null>(null);
+
+  function toHHMM(d: Date) {
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  }
+
+  function toDDMMYYYY(d: Date) {
+    return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`;
+  }
+
+  function parseHHMM(s: string): Date | null {
+    const m = s.match(/^(\d{1,2}):(\d{2})$/);
+    if (!m) return null;
+    const h = parseInt(m[1], 10);
+    const min = parseInt(m[2], 10);
+    if (h > 23 || min > 59) return null;
+    const d = new Date();
+    d.setHours(h, min, 0, 0);
+    return d;
+  }
+
+  function parseDDMMYYYY(s: string): Date | null {
+    const m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+    if (!m) return null;
+    const day = parseInt(m[1], 10);
+    const mon = parseInt(m[2], 10) - 1;
+    const yr = parseInt(m[3], 10);
+    if (mon < 0 || mon > 11 || day < 1 || day > 31) return null;
+    return new Date(yr, mon, day, 12, 0, 0, 0);
+  }
+
+  function commitWebPicker() {
+    const picked = webPickerIsDate ? parseDDMMYYYY(webPickerStr) : parseHHMM(webPickerStr);
+    if (picked) {
+      if (webCtx === 'form' && pickerField) {
+        applyPick(pickerField, picked);
+        setPickerField(null);
+      } else if (webCtx === 'inline') {
+        commitInlinePick(picked);
+      }
+    } else {
+      if (webCtx === 'form') setPickerField(null);
+      else if (webCtx === 'inline') { setInlineEvId(null); setInlineField(null); }
+    }
+    setWebCtx(null);
+  }
+
+  function closeWebPicker() {
+    if (webCtx === 'form') setPickerField(null);
+    else if (webCtx === 'inline') { setInlineEvId(null); setInlineField(null); }
+    setWebCtx(null);
+  }
+
+  // ── inline picker (date + time, direct from event card) ──
+  const [inlineEvId, setInlineEvId] = useState<string | null>(null);
+  const [inlineField, setInlineField] = useState<PickerField | null>(null);
+
+  const webPickerIsDate =
+    (webCtx === 'form' && pickerField?.endsWith('Date')) ||
+    (webCtx === 'inline' && inlineField?.endsWith('Date'));
+  const [inlinePickVal, setInlinePickVal] = useState(new Date());
+
+  function openInlinePicker(ev: CalendarEvent, field: PickerField) {
+    const val = field.startsWith('start') ? new Date(ev.startAt) : new Date(ev.endAt);
+    setInlinePickVal(val);
+    setInlineEvId(ev.id);
+    setInlineField(field);
+    if (Platform.OS === 'web') {
+      setWebPickerStr(field.endsWith('Time') ? toHHMM(val) : toDDMMYYYY(val));
+      setWebCtx('inline');
+    }
+  }
+
+  function handleInlinePickerChange(_: any, selected?: Date) {
+    if (!selected) {
+      setInlineEvId(null);
+      setInlineField(null);
+      return;
+    }
+    setInlinePickVal(selected);
+    if (Platform.OS === 'android') commitInlinePick(selected);
+  }
+
+  function commitInlinePick(picked?: Date) {
+    const val = picked ?? inlinePickVal;
+    const ev = events.find(e => e.id === inlineEvId);
+    if (!ev || !inlineField) {
+      setInlineEvId(null);
+      setInlineField(null);
+      return;
+    }
+    const s = new Date(ev.startAt);
+    const e = new Date(ev.endAt);
+    if (inlineField === 'startTime') {
+      s.setHours(val.getHours(), val.getMinutes(), 0, 0);
+    } else if (inlineField === 'endTime') {
+      e.setHours(val.getHours(), val.getMinutes(), 0, 0);
+    } else if (inlineField === 'startDate') {
+      s.setFullYear(val.getFullYear(), val.getMonth(), val.getDate());
+    } else {
+      e.setFullYear(val.getFullYear(), val.getMonth(), val.getDate());
+    }
+    const endAt = e <= s ? new Date(s.getTime() + 3_600_000) : e;
+    updateEvent({ ...ev, startAt: s, endAt });
+    setInlineEvId(null);
+    setInlineField(null);
+  }
+
   // ─── helpers for event row display ───────────────────────────────────────
 
   function renderEventMeta(ev: CalendarEvent) {
     const multiDay = !isSameDay(ev.startAt, ev.endAt);
     if (multiDay) {
       return (
-        <View style={styles.metaRow}>
-          <ThemedText style={[styles.meta, { color: colors.icon }]}>
-            {fmtDate(ev.startAt)}
-            {' – '}
-            {fmtDate(ev.endAt)}
-            {!ev.allDay ? `  ·  ${fmt(ev.startAt)} – ${fmt(ev.endAt)}` : ''}
-          </ThemedText>
+        <View style={styles.metaCol}>
+          <View style={styles.metaRow}>
+            <TouchableOpacity onPress={() => openInlinePicker(ev, 'startDate')} hitSlop={6}>
+              <ThemedText style={[styles.meta, { color: colors.tint }]}>{fmtDate(ev.startAt)}</ThemedText>
+            </TouchableOpacity>
+            <ThemedText style={[styles.meta, { color: colors.icon }]}> – </ThemedText>
+            <TouchableOpacity onPress={() => openInlinePicker(ev, 'endDate')} hitSlop={6}>
+              <ThemedText style={[styles.meta, { color: colors.tint }]}>{fmtDate(ev.endAt)}</ThemedText>
+            </TouchableOpacity>
+          </View>
+          {!ev.allDay && (
+            <View style={styles.metaRow}>
+              <Clock size={12} color={colors.icon} />
+              <TouchableOpacity onPress={() => openInlinePicker(ev, 'startTime')} hitSlop={6}>
+                <ThemedText style={[styles.meta, { color: colors.tint }]}>{fmt(ev.startAt)}</ThemedText>
+              </TouchableOpacity>
+              <ThemedText style={[styles.meta, { color: colors.icon }]}> – </ThemedText>
+              <TouchableOpacity onPress={() => openInlinePicker(ev, 'endTime')} hitSlop={6}>
+                <ThemedText style={[styles.meta, { color: colors.tint }]}>{fmt(ev.endAt)}</ThemedText>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       );
     }
     if (ev.allDay) {
       return (
-        <ThemedText style={[styles.meta, { color: colors.icon }]}>
-          {t('calendar.allDay')}
-        </ThemedText>
+        <View style={styles.metaRow}>
+          <TouchableOpacity onPress={() => openInlinePicker(ev, 'startDate')} hitSlop={6}>
+            <ThemedText style={[styles.meta, { color: colors.tint }]}>{fmtDate(ev.startAt)}</ThemedText>
+          </TouchableOpacity>
+          <ThemedText style={[styles.meta, { color: colors.icon }]}> · {t('calendar.allDay')}</ThemedText>
+        </View>
       );
     }
     return (
-      <View style={styles.metaRow}>
-        <Clock size={12} color={colors.icon} />
-        <ThemedText style={[styles.meta, { color: colors.icon }]}>
-          {fmt(ev.startAt)} – {fmt(ev.endAt)}
-        </ThemedText>
+      <View style={styles.metaCol}>
+        <View style={styles.metaRow}>
+          <TouchableOpacity onPress={() => openInlinePicker(ev, 'startDate')} hitSlop={6}>
+            <ThemedText style={[styles.meta, { color: colors.tint }]}>{fmtDate(ev.startAt)}</ThemedText>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.metaRow}>
+          <Clock size={12} color={colors.icon} />
+          <TouchableOpacity onPress={() => openInlinePicker(ev, 'startTime')} hitSlop={6}>
+            <ThemedText style={[styles.meta, { color: colors.tint }]}>{fmt(ev.startAt)}</ThemedText>
+          </TouchableOpacity>
+          <ThemedText style={[styles.meta, { color: colors.icon }]}> – </ThemedText>
+          <TouchableOpacity onPress={() => openInlinePicker(ev, 'endTime')} hitSlop={6}>
+            <ThemedText style={[styles.meta, { color: colors.tint }]}>{fmt(ev.endAt)}</ThemedText>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -571,6 +714,80 @@ export default function CalendarScreen() {
         />
       )}
 
+      {/* ── iOS inline date/time picker ── */}
+      {inlineEvId !== null && Platform.OS === 'ios' && (
+        <Modal
+          transparent
+          animationType="fade"
+          onRequestClose={() => { setInlineEvId(null); setInlineField(null); }}
+        >
+          <Pressable style={styles.pickerOverlay} onPress={() => { setInlineEvId(null); setInlineField(null); }}>
+            <Pressable style={[styles.pickerSheet, { backgroundColor: cardBg }]}>
+              <View style={styles.pickerHandle} />
+              <DateTimePicker
+                value={inlinePickVal}
+                mode={inlineField?.endsWith('Time') ? 'time' : 'date'}
+                display="spinner"
+                onChange={handleInlinePickerChange}
+                locale={locale}
+                style={styles.picker}
+              />
+              <TouchableOpacity
+                style={[styles.pickerDone, { backgroundColor: colors.tint }]}
+                onPress={() => commitInlinePick()}
+              >
+                <ThemedText style={styles.pickerDoneText}>{t('calendar.done')}</ThemedText>
+              </TouchableOpacity>
+            </Pressable>
+          </Pressable>
+        </Modal>
+      )}
+
+      {/* ── Android inline date/time picker ── */}
+      {inlineEvId !== null && Platform.OS === 'android' && (
+        <DateTimePicker
+          value={inlinePickVal}
+          mode={inlineField?.endsWith('Time') ? 'time' : 'date'}
+          display="default"
+          onChange={handleInlinePickerChange}
+        />
+      )}
+
+      {/* ── Web date/time picker (Chromebook / browser) ── */}
+      {webCtx !== null && (
+        <Modal transparent animationType="fade" onRequestClose={closeWebPicker}>
+          <Pressable style={styles.pickerOverlay} onPress={closeWebPicker}>
+            <Pressable style={[styles.pickerSheet, { backgroundColor: cardBg }]}>
+              <View style={styles.pickerHandle} />
+              <View style={styles.webTimeRow}>
+                <TextInput
+                  style={[
+                    webPickerIsDate ? styles.webDateInput : styles.webTimeInput,
+                    { color: colors.text, backgroundColor: inputBg, borderColor: colors.tint },
+                  ]}
+                  value={webPickerStr}
+                  onChangeText={setWebPickerStr}
+                  keyboardType="numbers-and-punctuation"
+                  autoFocus
+                  selectTextOnFocus
+                  placeholder={webPickerIsDate ? 'TT.MM.JJJJ' : 'HH:MM'}
+                  placeholderTextColor={colors.icon}
+                  maxLength={webPickerIsDate ? 10 : 5}
+                  onSubmitEditing={commitWebPicker}
+                  returnKeyType="done"
+                />
+              </View>
+              <TouchableOpacity
+                style={[styles.pickerDone, { backgroundColor: colors.tint }]}
+                onPress={commitWebPicker}
+              >
+                <ThemedText style={styles.pickerDoneText}>{t('calendar.done')}</ThemedText>
+              </TouchableOpacity>
+            </Pressable>
+          </Pressable>
+        </Modal>
+      )}
+
     </SafeAreaView>
   );
 }
@@ -641,4 +858,18 @@ const styles = StyleSheet.create({
   picker: { width: '100%' },
   pickerDone: { borderRadius: 12, paddingVertical: 13, alignItems: 'center', marginTop: 8 },
   pickerDoneText: { color: '#fff', fontWeight: '600', fontSize: 16 },
+
+  metaCol: { gap: 4 },
+
+  webTimeRow: { alignItems: 'center', paddingVertical: 24 },
+  webTimeInput: {
+    fontSize: 42, fontWeight: '300', textAlign: 'center',
+    borderRadius: 12, paddingHorizontal: 20, paddingVertical: 10,
+    borderWidth: 1.5, width: 160, letterSpacing: 4,
+  },
+  webDateInput: {
+    fontSize: 28, fontWeight: '300', textAlign: 'center',
+    borderRadius: 12, paddingHorizontal: 20, paddingVertical: 10,
+    borderWidth: 1.5, width: 220, letterSpacing: 2,
+  },
 });
