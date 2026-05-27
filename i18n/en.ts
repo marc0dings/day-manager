@@ -19,6 +19,32 @@ const en = {
     suggestionsHint: 'Activity suggestions when the weather is good',
     checklist: 'Checklist',
     checklistHint: 'Tasks and to-dos for today',
+    greetings: {
+      morning: [
+        'Good morning!',
+        'Rise and shine!',
+        "Morning — what's on today?",
+        "Good morning, let's get started.",
+      ],
+      afternoon: [
+        'Good afternoon!',
+        'Hey — afternoon already!',
+        "Hope the day's treating you well.",
+        'Good afternoon — keep it up!',
+      ],
+      evening: [
+        'Good evening!',
+        'Evening! Time to wind down.',
+        'Good evening — how was your day?',
+        'Evening! Almost done for today.',
+      ],
+      night: [
+        'Still up? Take it easy.',
+        'Burning the midnight oil?',
+        "Late night — don't forget to rest.",
+        'Night owl mode activated.',
+      ],
+    },
   },
   calendar: {
     title: 'Calendar',
@@ -96,7 +122,7 @@ const en = {
 export type Translations = {
   locale: string;
   tabs: { today: string; calendar: string; weather: string; checklists: string; settings: string };
-  today: { title: string; eventsTitle: string; noEvents: string; allDay: string; weather: string; weatherHint: string; weatherNoCity: string; suggestions: string; suggestionsHint: string; checklist: string; checklistHint: string };
+  today: { title: string; eventsTitle: string; noEvents: string; allDay: string; weather: string; weatherHint: string; weatherNoCity: string; suggestions: string; suggestionsHint: string; checklist: string; checklistHint: string; greetings: { morning: string[]; afternoon: string[]; evening: string[]; night: string[] } };
   calendar: { title: string; noEvents: string; newEvent: string; editEvent: string; save: string; allDay: string; start: string; end: string; locationPlaceholder: string; color: string; titlePlaceholder: string; done: string; multiDayHint: string; months: string[]; weekdays: string[] };
   checklists: { title: string; newChecklist: string; titlePlaceholder: string; addItemPlaceholder: string; create: string; active: string; completed: string; empty: string; assignEvent: string; noEvent: string; eventPickerTitle: string; noEventsToLink: string };
   settings: { title: string; language: string; account: string; accountHint: string; namePlaceholder: string; appearance: string; appearanceHint: string; themeLight: string; themeDark: string; themeSystem: string; notifications: string; notificationsHint: string; weatherSource: string; weatherSourceHint: string; weatherNoCity: string; weatherCityClear: string };

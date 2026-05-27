@@ -31,6 +31,16 @@ export default function TodayScreen() {
     month: 'long',
   });
 
+  const greeting = (() => {
+    const h = today.getHours();
+    const period =
+      h >= 5 && h < 12 ? 'morning' :
+      h >= 12 && h < 18 ? 'afternoon' :
+      h >= 18 && h < 22 ? 'evening' : 'night';
+    const variants = t(`today.greetings.${period}`, { returnObjects: true }) as string[];
+    return variants[today.getDate() % variants.length];
+  })();
+
   const { events } = useEvents();
 
   const todayEvents = useMemo(() => {
@@ -71,7 +81,7 @@ export default function TodayScreen() {
       <ScrollView contentContainerStyle={styles.scroll}>
 
         <ThemedView style={styles.header}>
-          <ThemedText type="title">{t('today.title')}</ThemedText>
+          <ThemedText type="title">{greeting}</ThemedText>
           <ThemedText style={[styles.date, { color: colors.icon }]}>{dateLabel}</ThemedText>
         </ThemedView>
 

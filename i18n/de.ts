@@ -21,6 +21,32 @@ const de: Translations = {
     suggestionsHint: 'Aktivitätsvorschläge bei schönem Wetter',
     checklist: 'Checkliste',
     checklistHint: 'Aufgaben und To-dos für heute',
+    greetings: {
+      morning: [
+        'Guten Morgen!',
+        'Guten Morgen — starte gut in den Tag.',
+        'Morgen! Was steht heute an?',
+        'Schönen guten Morgen!',
+      ],
+      afternoon: [
+        'Guten Nachmittag!',
+        'Schönen Nachmittag!',
+        'Hey — schon Nachmittag!',
+        'Guten Tag — weiter so!',
+      ],
+      evening: [
+        'Guten Abend!',
+        'Schönen Abend!',
+        'Guten Abend — wie war der Tag?',
+        'Abend! Zeit zum Entspannen.',
+      ],
+      night: [
+        'Noch so spät wach?',
+        'Schon spät — gönn dir die Ruhe.',
+        'Nachtschicht? Pass auf dich auf.',
+        'Noch auf? Schlaf gut später.',
+      ],
+    },
   },
   calendar: {
     title: 'Kalender',
