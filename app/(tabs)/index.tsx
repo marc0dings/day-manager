@@ -16,6 +16,7 @@ import {
   loadSavedCity,
   weatherEmoji,
 } from '@/services/weather';
+import { type Suggestion, generateSuggestions } from '@/services/suggestions';
 
 export default function TodayScreen() {
   const scheme = useColorScheme() ?? 'light';
@@ -64,16 +65,21 @@ export default function TodayScreen() {
   const [city, setCity] = useState<SavedCity | null>(null);
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
 
   useEffect(() => {
     loadSavedCity().then(saved => {
       if (!saved) { setWeatherLoading(false); return; }
       setCity(saved);
       fetchWeather(saved.latitude, saved.longitude)
-        .then(setWeather)
+        .then(data => {
+          setWeather(data);
+          setSuggestions(generateSuggestions(events, data.daily));
+        })
         .catch(() => {})
         .finally(() => setWeatherLoading(false));
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -170,7 +176,42 @@ export default function TodayScreen() {
         {/* Suggestions */}
         <ThemedView style={[styles.card, { backgroundColor: cardBg }]}>
           <ThemedText type="subtitle">{t('today.suggestions')}</ThemedText>
-          <ThemedText style={styles.hint}>{t('today.suggestionsHint')}</ThemedText>
+
+          {weatherLoading && (
+            <ActivityIndicator size="small" color={colors.tint} style={{ alignSelf: 'flex-start' }} />
+          )}
+
+          {!weatherLoading && !city && (
+            <ThemedText style={styles.hint}>{t('today.suggestionsNoCity')}</ThemedText>
+          )}
+
+          {!weatherLoading && city && suggestions.length === 0 && (
+            <ThemedText style={styles.hint}>{t('today.suggestionsNone')}</ThemedText>
+          )}
+
+          {!weatherLoading && suggestions.length > 0 && (
+            <View style={styles.suggestionList}>
+              {suggestions.map((s, i) => {
+                const dateLabel = s.date.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
+                return (
+                  <View key={i} style={[styles.suggestionRow, { borderColor: colors.tint + '44' }]}>
+                    <ThemedText style={styles.suggestionEmoji}>{s.emoji}</ThemedText>
+                    <View style={styles.suggestionContent}>
+                      <ThemedText type="defaultSemiBold" style={styles.suggestionTitle}>
+                        {s.activity}
+                      </ThemedText>
+                      <ThemedText style={[styles.suggestionMeta, { color: colors.icon }]}>
+                        {t('today.suggestionOn')} {dateLabel}
+                      </ThemedText>
+                      <ThemedText style={[styles.suggestionMeta, { color: colors.icon }]}>
+                        {weatherEmoji(s.weatherCode)} {t('today.suggestionWeather', { temp: s.maxTemp })}
+                      </ThemedText>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          )}
         </ThemedView>
 
         {/* Daily checklist */}
@@ -207,4 +248,11 @@ const styles = StyleSheet.create({
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   meta: { fontSize: 12 },
   colorDot: { width: 8, height: 8, borderRadius: 4, marginTop: 5 },
+
+  suggestionList: { gap: 10 },
+  suggestionRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, borderWidth: 1, borderRadius: 10, padding: 10 },
+  suggestionEmoji: { fontSize: 28, lineHeight: 34 },
+  suggestionContent: { flex: 1, gap: 3 },
+  suggestionTitle: { fontSize: 15 },
+  suggestionMeta: { fontSize: 12 },
 });

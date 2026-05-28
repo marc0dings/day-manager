@@ -19,6 +19,10 @@ const de: Translations = {
     weatherNoCity: 'Keine Stadt eingestellt. Öffne den Wetter-Tab zum Suchen.',
     suggestions: 'Vorschläge',
     suggestionsHint: 'Aktivitätsvorschläge bei schönem Wetter',
+    suggestionsNoCity: 'Keine Stadt eingestellt — öffne den Wetter-Tab für Vorschläge.',
+    suggestionsNone: 'Keine Vorschläge — alles verplant oder kein schönes Wetter in den nächsten Tagen.',
+    suggestionOn: 'am',
+    suggestionWeather: '{{temp}}°C — perfektes Wetter!',
     checklist: 'Checkliste',
     checklistHint: 'Aufgaben und To-dos für heute',
     greetings: {

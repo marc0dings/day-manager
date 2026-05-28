@@ -17,6 +17,10 @@ const en = {
     weatherNoCity: 'No city set. Go to the Weather tab to search.',
     suggestions: 'Suggestions',
     suggestionsHint: 'Activity suggestions when the weather is good',
+    suggestionsNoCity: 'No city set — open the Weather tab to enable suggestions.',
+    suggestionsNone: 'No suggestions — everything is planned or no good weather in the next days.',
+    suggestionOn: 'on',
+    suggestionWeather: '{{temp}}°C — perfect weather!',
     checklist: 'Checklist',
     checklistHint: 'Tasks and to-dos for today',
     greetings: {
@@ -122,7 +126,7 @@ const en = {
 export type Translations = {
   locale: string;
   tabs: { today: string; calendar: string; weather: string; checklists: string; settings: string };
-  today: { title: string; eventsTitle: string; noEvents: string; allDay: string; weather: string; weatherHint: string; weatherNoCity: string; suggestions: string; suggestionsHint: string; checklist: string; checklistHint: string; greetings: { morning: string[]; afternoon: string[]; evening: string[]; night: string[] } };
+  today: { title: string; eventsTitle: string; noEvents: string; allDay: string; weather: string; weatherHint: string; weatherNoCity: string; suggestions: string; suggestionsHint: string; suggestionsNoCity: string; suggestionsNone: string; suggestionOn: string; suggestionWeather: string; checklist: string; checklistHint: string; greetings: { morning: string[]; afternoon: string[]; evening: string[]; night: string[] } };
   calendar: { title: string; noEvents: string; newEvent: string; editEvent: string; save: string; allDay: string; start: string; end: string; locationPlaceholder: string; color: string; titlePlaceholder: string; done: string; multiDayHint: string; months: string[]; weekdays: string[] };
   checklists: { title: string; newChecklist: string; titlePlaceholder: string; addItemPlaceholder: string; create: string; active: string; completed: string; empty: string; assignEvent: string; noEvent: string; eventPickerTitle: string; noEventsToLink: string };
   settings: { title: string; language: string; account: string; accountHint: string; namePlaceholder: string; appearance: string; appearanceHint: string; themeLight: string; themeDark: string; themeSystem: string; notifications: string; notificationsHint: string; weatherSource: string; weatherSourceHint: string; weatherNoCity: string; weatherCityClear: string };
